@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
     FILE *fp;
     char *line = NULL;
-    fp = fopen("complex.txt", "r"); // opening file in read mode.
+    fp = fopen("src/complex.txt", "r"); // opening file in read mode.
     size_t len = 0;
     ssize_t read;
     if (fp == NULL)
@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
     output = (complex_number *)calloc(ceil(size / 2), sizeof(complex_number));
 
     int count_temp = 0;
+
+    // reading complex numbers from file.
     while ((read = getline(&line, &len, fp)) != -1)
     {
         char *temp_line = line;
@@ -77,20 +79,21 @@ int main(int argc, char *argv[])
     }
 
     printf("Complex numbers are read from file, now gonna start multiplying them : \n");
+    printf("\n\n");
 
     // Closing the file descriptor and freeing up the memory used to read lines from a file.
     fclose(fp);
     if (line)
         free(line);
 
-    printf("Complex numbers read from file : \n");
-    for (int i = 0; i < size; i++)
-    {
-        printf("Compex number %d => %lld+i%llFd\n", i, cn_array[i].real, cn_array[i].imaginary);
-    }
+    // printf("Complex numbers read from file : \n");
+    // for (int i = 0; i < size; i++)
+    // {
+    //     printf("Compex number %d => %lld+i%lld\n", i, cn_array[i].real, cn_array[i].imaginary);
+    // }
 
     int q = size;
-    int level = 1;
+    int level = 0;
     while (q > 1)
     { // even number of elements
         if (q % 2 == 0)
@@ -154,22 +157,23 @@ int main(int argc, char *argv[])
         }
     }
 
+    printf("\n\n");
+
     if (cn_array[0].imaginary < 0)
     {
-        printf("Final output : %lld %lldi\n", cn_array[0].real, cn_array[0].imaginary);
+        printf(GRN "Final output : %lld %lldi\n" RESET, cn_array[0].real, cn_array[0].imaginary);
     }
     else
     {
-        printf("Final output : %lld +%lldi\n", cn_array[0].real, cn_array[0].imaginary);
+        printf(GRN "Final output : %lld +%lldi\n" RESET, cn_array[0].real, cn_array[0].imaginary);
     }
-
+    fflush(stdout);
     free(output);
     free(cn_array);
 }
 
 void *runner(void *param)
 {
-    printf("My thread id : %ld\n", pthread_self());
     struct temp *temp = (struct temp *)param;
 
     complex_number first = cn_array[2 * temp->thread_number];
@@ -177,8 +181,8 @@ void *runner(void *param)
 
     complex_number value;
 
-    printf("from thread %d at level %d : first complex numer : %lld+i%lld\n", temp->thread_number, temp->level, first.real, first.imaginary);
-    printf("from thread %d at level %d : second complex numer : %lld+i%lld\n", temp->thread_number, temp->level, second.real, second.imaginary);
+    // printf("from thread %d at level %d : first complex numer : %lld+i%lld\n", temp->thread_number, temp->level, first.real, first.imaginary);
+    // printf("from thread %d at level %d : second complex numer : %lld+i%lld\n", temp->thread_number, temp->level, second.real, second.imaginary);
 
     long long int xu = first.real * second.real;
     long long int yv = first.imaginary * second.imaginary;
@@ -191,30 +195,13 @@ void *runner(void *param)
     output[temp->thread_number] = value;
     if (value.imaginary < 0)
     {
-        printf("Intermdiate output from thread %d : %lld %lldi\n", temp->thread_number, value.real, value.imaginary);
+        printf("Intermdiate output from thread %d at level %d with thread id : %ld "CYN"=>"RESET" %lld %lldi\n", temp->thread_number, temp->level, pthread_self(), value.real, value.imaginary);
     }
     else
     {
-        printf("Intermdiate output from thread %d : %lld +%lldi\n", temp->thread_number, value.real, value.imaginary);
+        printf("Intermdiate output from thread %d at level %d with thread id : %ld "CYN"=>"RESET" %lld +%lldi\n", temp->thread_number, temp->level, pthread_self(), value.real, value.imaginary);
     }
-
-    // char temp_string[256];
-    // int count = 0;
-    // int calculate = (temp->thread_number)*((int)pow(2, temp->level)) ;
-    // for (int i = calculate ; i <= calculate + ((int)pow(2, temp->level)); i++)
-    // {
-    //     temp_string[count++] = 'C';
-    //     temp_string[count++] = 'N';
-    //     temp_string[count++] = ' ';
-    //     temp_string[count++] = itoa(i);
-    //     temp_string[count++] = ',';
-    // }
-    // temp_string[count] == '\0';
-    // value->imaginary = 0;
-    // value->real = 0;
-    // printf("Thread_Number : %d%d will calculate the product of %s\n", temp->level, temp->thread_number, temp_string);
-    // printf("%d\n",1);
-
+    fflush(stdout);
     free(temp);
     pthread_exit(0);
 }
