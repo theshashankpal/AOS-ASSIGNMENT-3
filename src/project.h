@@ -22,5 +22,17 @@
 #define WHT   "\x1B[37m"
 #define RESET "\x1B[0m"
 
+typedef struct _complex
+{
+    long long int real;
+    long long int imaginary;
+} complex_number;
+
+struct temp
+{
+    int level;
+    int thread_number;
+};
+
 
 #endif //ASSIGNMENT_H

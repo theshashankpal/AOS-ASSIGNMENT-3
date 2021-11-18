@@ -1,19 +1,5 @@
 #include "project.h"
 
-int size;
-
-typedef struct _complex
-{
-    long long int real;
-    long long int imaginary;
-} complex_number;
-
-struct temp
-{
-    int level;
-    int thread_number;
-};
-
 complex_number *cn_array;
 complex_number *output;
 
@@ -31,7 +17,6 @@ int main(int argc, char *argv[])
     FILE *fp;
     char *line = NULL;
     fp = fopen("src/complex.txt", "r"); // opening file in read mode.
-    size_t len = 0;
     ssize_t read;
     if (fp == NULL)
     {
@@ -39,7 +24,9 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    read = fscanf(fp,"%d", &size); // reading first line that containts total number of complex mumber there are.
+    int size;
+
+    read = fscanf(fp, "%d", &size); // reading first line that containts total number of complex mumber there are.
 
     printf("No. of complex numbers to multiply : %d\n", size);
 
@@ -69,7 +56,7 @@ int main(int argc, char *argv[])
 
     int q = size;
     int level = 0;
-    
+
     while (q > 1)
     { // even number of elements
         if (q % 2 == 0)
@@ -82,7 +69,7 @@ int main(int argc, char *argv[])
                 struct temp *temporary = (struct temp *)malloc(sizeof(struct temp));
                 temporary->level = level;
                 temporary->thread_number = i;
-                 if (pthread_create(tid_array + i, NULL, runner, temporary) != 0)
+                if (pthread_create(tid_array + i, NULL, runner, temporary) != 0)
                 {
                     perror("CREATION OF THREAD ");
                     exit(EXIT_FAILURE);
@@ -115,7 +102,7 @@ int main(int argc, char *argv[])
                 struct temp *temporary = (struct temp *)malloc(sizeof(struct temp));
                 temporary->level = level;
                 temporary->thread_number = i;
-               if (pthread_create(tid_array + i, NULL, runner, temporary) != 0)
+                if (pthread_create(tid_array + i, NULL, runner, temporary) != 0)
                 {
                     perror("CREATION OF THREAD ");
                     exit(EXIT_FAILURE);
@@ -190,5 +177,5 @@ void *runner(void *param)
 
     fflush(stdout);
     free(temp);
-    pthread_exit(0);
+    pthread_exit(EXIT_SUCCESS);
 }
