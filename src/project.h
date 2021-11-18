@@ -8,16 +8,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <semaphore.h> /* for semaphores */ 
-#include <unistd.h> /* for fork() and execv */
-#include <sys/mman.h> /*Prot_READ constants*/
-#include <mqueue.h> /* "O_CREAT" O_Constants*/
-#include <wait.h> /* SIGCONT , SIGSTOP*/
 #include <math.h>
 #include <pthread.h>
 #include <string.h>
-
-#define SHARED_MEMORY_NAME "/SYSSHAREDMEMORY"
+#include <limits.h>
 
 #define RED   "\x1B[31m"
 #define GRN   "\x1B[32m"

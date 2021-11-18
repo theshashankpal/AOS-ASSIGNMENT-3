@@ -23,6 +23,11 @@ int main(int argc, char *argv[])
 {
     printf("\n");
 
+    if (argc != 2)
+    {
+        printf("You've entered too many or too few arguments.\nPlease start the program with 1 single argument containtg path to the file \n");
+        exit(0);
+    }
     FILE *fp;
     char *line = NULL;
     fp = fopen("src/complex.txt", "r"); // opening file in read mode.
@@ -34,44 +39,22 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    read = getline(&line, &len, fp);
-    size = atoi(line);
+    read = fscanf(fp,"%d", &size); // reading first line that containts total number of complex mumber there are.
 
     printf("No. of complex numbers to multiply : %d\n", size);
 
-    cn_array = (complex_number *)calloc(size, sizeof(complex_number));
-    output = (complex_number *)calloc(ceil(size / 2), sizeof(complex_number));
+    cn_array = (complex_number *)calloc(size, sizeof(complex_number)); // Allocating array of size equivalent to total number of complex numbers.
 
     int count_temp = 0;
 
     // reading complex numbers from file.
-    while ((read = getline(&line, &len, fp)) != -1)
+    while (1)
     {
-        char *temp_line = line;
-        int count = 0;
-        char temp[256];
-        while ((*temp_line) != '+')
-        {
-            temp[count++] = *temp_line;
-            temp_line = temp_line + 1;
-        }
-        temp[count] = '\0';
-        long long int real = atoi(temp);
-
-        temp_line++; // crossed '+'
-        temp_line++; // crossed 'i'
-
-        char temp1[256];
-        count = 0;
-        while ((*temp_line) != '\n')
-        {
-            temp1[count++] = *temp_line;
-            temp_line = temp_line + 1;
-        }
-
-        temp1[count] = '\0';
-        long long int imaginary = atoi(temp1);
-
+        long long int real;
+        long long int imaginary;
+        read = fscanf(fp, "%lld+i%lld", &real, &imaginary);
+        if (read == -1)
+            break;
         complex_number cn;
         cn.real = real;
         cn.imaginary = imaginary;
@@ -83,37 +66,35 @@ int main(int argc, char *argv[])
 
     // Closing the file descriptor and freeing up the memory used to read lines from a file.
     fclose(fp);
-    if (line)
-        free(line);
-
-    // printf("Complex numbers read from file : \n");
-    // for (int i = 0; i < size; i++)
-    // {
-    //     printf("Compex number %d => %lld+i%lld\n", i, cn_array[i].real, cn_array[i].imaginary);
-    // }
 
     int q = size;
     int level = 0;
+    
     while (q > 1)
     { // even number of elements
         if (q % 2 == 0)
         {
             q = q / 2;
+            output = (complex_number *)calloc(q, sizeof(complex_number));
             pthread_t tid_array[q];
             for (int i = 0; i < q; i++)
             {
-                struct temp *temporary = (struct temp *)calloc(1, sizeof(struct temp));
+                struct temp *temporary = (struct temp *)malloc(sizeof(struct temp));
                 temporary->level = level;
                 temporary->thread_number = i;
-                pthread_create(tid_array + i, NULL, runner, temporary);
+                 if (pthread_create(tid_array + i, NULL, runner, temporary) != 0)
+                {
+                    perror("CREATION OF THREAD ");
+                    exit(EXIT_FAILURE);
+                }
             }
 
             for (int i = 0; i < q; i++)
             {
                 if (pthread_join(tid_array[i], NULL) != 0)
                 {
-                    perror("JOIN ");
-                    exit(1);
+                    perror("JOINING OF THREAD ");
+                    exit(EXIT_FAILURE);
                 }
             }
 
@@ -127,21 +108,26 @@ int main(int argc, char *argv[])
         { // odd number of elements.
             int temp = q;
             q = q / 2;
+            output = (complex_number *)calloc(q, sizeof(complex_number));
             pthread_t tid_array[q];
             for (int i = 0; i < q; i++)
             {
-                struct temp *temporary = (struct temp *)calloc(1, sizeof(struct temp));
+                struct temp *temporary = (struct temp *)malloc(sizeof(struct temp));
                 temporary->level = level;
                 temporary->thread_number = i;
-                pthread_create(tid_array + i, NULL, runner, temporary);
+               if (pthread_create(tid_array + i, NULL, runner, temporary) != 0)
+                {
+                    perror("CREATION OF THREAD ");
+                    exit(EXIT_FAILURE);
+                }
             }
 
             for (int i = 0; i < q; i++)
             {
                 if (pthread_join(tid_array[i], NULL) != 0)
                 {
-                    perror("JOIN ");
-                    exit(1);
+                    perror("JOINING OF THREAD ");
+                    exit(EXIT_FAILURE);
                 }
             }
 
@@ -152,9 +138,11 @@ int main(int argc, char *argv[])
             }
 
             cn_array[i] = cn_array[temp - 1];
-            q++;
+            q++; // Increasing size to match the extra transferred complex number as previoulsy, array size was odd.
             level++;
         }
+
+        free(output);
     }
 
     printf("\n\n");
@@ -167,8 +155,8 @@ int main(int argc, char *argv[])
     {
         printf(GRN "Final output : %lld +%lldi\n" RESET, cn_array[0].real, cn_array[0].imaginary);
     }
+
     fflush(stdout);
-    free(output);
     free(cn_array);
 }
 
@@ -181,9 +169,7 @@ void *runner(void *param)
 
     complex_number value;
 
-    // printf("from thread %d at level %d : first complex numer : %lld+i%lld\n", temp->thread_number, temp->level, first.real, first.imaginary);
-    // printf("from thread %d at level %d : second complex numer : %lld+i%lld\n", temp->thread_number, temp->level, second.real, second.imaginary);
-
+    // Multiplying the complex numbers.
     long long int xu = first.real * second.real;
     long long int yv = first.imaginary * second.imaginary;
     long long int xv = first.real * second.imaginary;
@@ -195,12 +181,13 @@ void *runner(void *param)
     output[temp->thread_number] = value;
     if (value.imaginary < 0)
     {
-        printf("Intermdiate output from thread %d at level %d with thread id : %ld "CYN"=>"RESET" %lld %lldi\n", temp->thread_number, temp->level, pthread_self(), value.real, value.imaginary);
+        printf("Intermdiate output from thread %d at level %d with thread id : %ld " CYN "=>" RESET " %lld %lldi\n", temp->thread_number, temp->level, pthread_self(), value.real, value.imaginary);
     }
     else
     {
-        printf("Intermdiate output from thread %d at level %d with thread id : %ld "CYN"=>"RESET" %lld +%lldi\n", temp->thread_number, temp->level, pthread_self(), value.real, value.imaginary);
+        printf("Intermdiate output from thread %d at level %d with thread id : %ld " CYN "=>" RESET " %lld +%lldi\n", temp->thread_number, temp->level, pthread_self(), value.real, value.imaginary);
     }
+
     fflush(stdout);
     free(temp);
     pthread_exit(0);
