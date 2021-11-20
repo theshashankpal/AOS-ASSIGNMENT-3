@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     }
     FILE *fp;
     char *line = NULL;
-    fp = fopen("src/complex.txt", "r"); // opening file in read mode.
+    fp = fopen(argv[1], "r"); // opening file in read mode.
     ssize_t read;
     if (fp == NULL)
     {
